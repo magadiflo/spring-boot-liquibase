@@ -319,3 +319,115 @@ Si hasta este punto ejecutamos la aplicación, veremos que no hay tablas creadas
 no le hemos dicho a `hibernate` que nos cree las tablas a partir de las entidades como normalmente lo hemos venido
 haciendo y eso está bien, ya que ahora crearemos dichas tablas utilizando `Liquibase`.
 
+## Organizando nuestros changeLogs (archivos de migración)
+
+El directorio `/changelog` será usado para colocar todos los archivos de migración que iremos creando conforme avance
+el proyecto.
+
+Solo para mantener una regla general propia, es que adoptaremos la siguiente nomenclatura para los archivos de
+migración:
+
+> <migration_number>_<what_does_this_migration_do>.yml
+
+Ahora, el archivo `changelog-master.yml`, es el archivo que definimos en la propiedad `spring.liquibase.change-log`
+del `application.yml`, por lo tanto, será el archivo donde incluiremos todas las migraciones que vayamos creando.
+
+Por ejemplo, en nuestro archivo `changelog-master.yml` podemos incluir archivo por archivo:
+
+````yml
+databaseChangeLog:
+  - include:
+      file: /db/changelog/1_create_book_and_library_tables.yml
+````
+
+O como en nuestro caso, incluiremos todo el directorio `/db/changelog`:
+
+````yml
+databaseChangeLog:
+  - includeAll:
+      path: /db/changelog/
+````
+
+## ChangeLog #1: Creación de tablas
+
+De esta forma, `Liquibase` ejecutará los `changeLogs` ordenados por su número.
+
+Este es nuestro archivo `1_create_book_and_library_tables.yml`. Como su nombre lo indica, crea las tablas:
+
+````yml
+databaseChangeLog:
+  - changeSet:
+      id: create_libraries_table
+      author: Martín
+      changes:
+        - createTable:
+            tableName: libraries
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+  - changeSet:
+      id: create_books_table
+      author: Martín
+      changes:
+        - createTable:
+            tableName: books
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: library_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_libraries_books
+                    references: libraries(id)
+````
+
+## Ejecutando aplicación
+
+Al ejecutar la aplicación con el `changeLog` anterior, observamos que en la base de datos se han creado las dos tablas
+definidas: `libraries` y `books`, además la tabla `DATABASECHANGELOG` empieza a registrar qué migraciones se están
+ejecutando para llevar el control de los mismos:
+
+![first-migration](./assets/03.first-migration.png)
+
+Podemos realizar peticiones a nuestro backend y ver que se realiza sin ningún problema, eso significa que la
+comunicación con la base de datos está funcionando correctamente:
+
+````bash
+$ curl -v http://localhost:8080/api/v1/books | jq
+
+>
+< HTTP/1.1 200
+<
+[]
+````
+
+````bash
+$ curl -v http://localhost:8080/api/v1/libraries | jq
+
+>
+< HTTP/1.1 200
+<
+[]
+````
+
