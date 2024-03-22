@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: drop_publisher_from_books
+      author: Martín
+      changes:
+        - dropColumn:
+            tableName: books
+            columnName: publisher

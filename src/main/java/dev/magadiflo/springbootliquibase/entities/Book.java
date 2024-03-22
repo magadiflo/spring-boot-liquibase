@@ -21,7 +21,6 @@ public class Book {
     private String title;
 
     private String isbn;
-    private String publisher;
 
     @ManyToOne
     @JoinColumn(name = "library_id")

@@ -697,3 +697,96 @@ $ curl -v http://localhost:8080/api/v1/books | jq
   }
 ]
 ````
+
+## Changelog #5: eliminando una columna
+
+Supongamos que seguimos avanzando en el proyecto, y más adelante nos damos cuenta de que el campo `publisher` ya no
+es necesario, entonces haríamos lo siguiente:
+
+### Primer paso
+
+El primer paso sería crear el archivo `5_drop_publiser_from_book.yml`:
+
+````yaml
+databaseChangeLog:
+  - changeSet:
+      id: drop_publisher_from_books
+      author: Martín
+      changes:
+        - dropColumn:
+            tableName: books
+            columnName: publisher
+````
+
+Luego ejecutamos el registro de cambios y al consultar la tabla en la base de datos veremos que la columna fue
+eliminado:
+
+![06.drop-column-books.png](./assets/06.drop-column-books.png)
+
+### Segundo paso
+
+Como segundo paso es ir a la entidad `Book` y eliminar el atributo `publisher`:
+
+````java
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
+@Entity
+@Table(name = "books")
+public class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String title;
+
+    private String isbn;
+
+    @ManyToOne
+    @JoinColumn(name = "library_id")
+    private Library library;
+}
+````
+
+Realizamos una petición al endpoint y vemos que ya no está la columna `publisher`:
+
+````bash
+$ curl -v http://localhost:8080/api/v1/books | jq
+
+>
+< HTTP/1.1 200
+<
+[
+  {
+    "id": 1,
+    "title": "Java 21 4ta edición",
+    "isbn": null,
+    "library": {
+      "id": 1,
+      "name": "Biblioteca Municipal"
+    }
+  },
+  {...},
+  {...},
+  {
+    "id": 4,
+    "title": "Sprig Boot 3 con Java 21",
+    "isbn": null,
+    "library": {
+      "id": 3,
+      "name": "Biblioteca de la UNS"
+    }
+  }
+]
+````
+
+## Conclusión
+
+El control de versiones de los cambios en la base de datos es tan importante como el control de versiones del código
+fuente, y herramientas como `Liquibase` permiten hacerlo de forma segura y manejable.
+
+A través de este sencillo ejemplo, aprendimos cómo podemos desarrollar una base de datos en una aplicación Java
+integrando Liquibase con Spring Boot.
