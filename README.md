@@ -198,3 +198,124 @@ Si hasta este punto ejecutamos la aplicación, veremos que todo se ejecutará ex
 veremos que se nos han creado dos tablas:
 
 ![02.run-first.png](./assets/02.run-first.png)
+
+## Creando entidades, repositorios y controladores
+
+Iniciaremos con unas clases base, digamos que son los primeros requerimientos que tenemos, así que debemos crear las
+entidades, repositorios, controladores, etc. Más adelante, veremos cómo podemos cambiar esta estructura base, sobre todo
+en las entidades, cuando nos llegue un requerimiento de que la entidad `Book` requiere un nuevo campo o la
+entidad `Library` requiere otro campo, etc. Veremos cómo es que con la ayuda de las migraciones que hace
+`Liquibase` todo nos resultará sencillo.
+
+## Entidades
+
+````java
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
+@Entity
+@Table(name = "books")
+public class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String title;
+
+    @ManyToOne
+    @JoinColumn(name = "library_id")
+    private Library library;
+}
+````
+
+````java
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
+@Entity
+@Table(name = "libraries")
+public class Library {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @OneToMany(mappedBy = "library")
+    private List<Book> books = new ArrayList<>();
+}
+````
+
+## Repositorios
+
+````java
+public interface BookRepository extends CrudRepository<Book, Long> {
+}
+
+public interface LibraryRepository extends CrudRepository<Library, Long> {
+}
+````
+
+## Controladores
+
+Aquí nos estamos saltando la creación de los `services`, dado que este proyecto está enfocado en el uso de `Liquibase`,
+vamos a omitir esa capa para hacer más sencilla la aplicación.
+
+````java
+
+@RequiredArgsConstructor
+@Slf4j
+@RestController
+@RequestMapping(path = "/api/v1/books")
+public class BookController {
+
+    private final BookRepository bookRepository;
+
+    @GetMapping
+    public ResponseEntity<List<Book>> getAllBooks() {
+        return ResponseEntity.ok((List<Book>) this.bookRepository.findAll());
+    }
+
+    @PostMapping
+    public ResponseEntity<Book> saveBook(@RequestBody Book book) {
+        Book bookDB = this.bookRepository.save(book);
+        return new ResponseEntity<>(bookDB, HttpStatus.CREATED);
+    }
+}
+````
+
+````java
+
+@RequiredArgsConstructor
+@Slf4j
+@RestController
+@RequestMapping(path = "/api/v1/libraries")
+public class LibraryController {
+
+    private final LibraryRepository libraryRepository;
+
+    @GetMapping
+    public ResponseEntity<List<Library>> getAllLibraries() {
+        return ResponseEntity.ok((List<Library>) this.libraryRepository.findAll());
+    }
+
+    @PostMapping
+    public ResponseEntity<Library> saveLibrary(@RequestBody Library library) {
+        Library libraryDB = this.libraryRepository.save(library);
+        return new ResponseEntity<>(libraryDB, HttpStatus.CREATED);
+    }
+}
+````
+
+## Ejecutando la aplicación
+
+Si hasta este punto ejecutamos la aplicación, veremos que no hay tablas creadas en la base de datos y eso es, porque
+no le hemos dicho a `hibernate` que nos cree las tablas a partir de las entidades como normalmente lo hemos venido
+haciendo y eso está bien, ya que ahora crearemos dichas tablas utilizando `Liquibase`.
+
