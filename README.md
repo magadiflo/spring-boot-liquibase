@@ -93,3 +93,108 @@ implementa solo los `changeSets` nuevos.
 `DATABASECHANGELOGLOCK` evita que varias instancias de Liquibase actualicen la base de datos al mismo tiempo. La tabla
 administra el acceso a la tabla `DATABASECHANGELOG` durante la implementación y garantiza que solo una instancia de
 Liquibase actualice la base de datos.
+
+---
+
+# [Usando Liquibase con Spring Boot](https://contribute.liquibase.com/extensions-integrations/directory/integration-docs/springboot/springboot/)
+
+---
+
+## Dependencias
+
+````xml
+<!--Spring Boot 3.2.4-->
+<!--Java 21-->
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.liquibase</groupId>
+        <artifactId>liquibase-core</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>com.microsoft.sqlserver</groupId>
+        <artifactId>mssql-jdbc</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+````
+
+Al crear el proyecto desde `Spring Initializr` y agregar la dependencia de `Liquibase`, se nos crea en automático el
+directorio `src/main/resources/db/changelog`.
+
+## Application.yml
+
+````yml
+server:
+  port: 8080
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: spring-boot-liquibase
+
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=db_liquibase;encrypt=true;trustServerCertificate=true;
+    username: sa
+    password: magadiflo
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog-master.yml
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+````
+
+**NOTA**
+
+- Por defecto, se espera que el archivo changeLog de Liquibase esté en `db/changelog/changelog-master.yml`; pero estamos
+  cambiando el valor de la configuración `spring.liquibase.change-log` para ponerlo en
+  `src/main/resources/db/changelog-master.yml`.
+
+## Configurando el changelog-master.yml
+
+Recordemos que Liquibase nos permite trabajar con distintos tipos de archivos SQL, XML, JSON y `YML`. En este proyecto
+trabajaremos con `YML`, es por eso que creamos el archivo `changelog-master.yml`.
+
+Agregamos el siguiente contenido a dicho archivo:
+
+````yaml
+databaseChangeLog:
+````
+
+La configuración `databaseChangeLog` es el punto de partida a partir del cual se agregan los `changeSets`,
+pero por el momento, como queremos ejecutar la aplicación, solo dejaremos dicha configuración, ya que el
+archivo  `changelog-master.yml` no puede estar vacío, sino nos va a mostrar un error.
+
+## Ejecutando aplicación
+
+Si hasta este punto ejecutamos la aplicación, veremos que todo se ejecutará exitosamente y si revisamos la base de datos
+veremos que se nos han creado dos tablas:
+
+![02.run-first.png](./assets/02.run-first.png)
