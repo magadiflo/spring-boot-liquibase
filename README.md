@@ -591,3 +591,109 @@ $ curl -v http://localhost:8080/api/v1/books | jq
 El id de `books` empieza en 4 y es porque había iniciado anteriormente la aplicación con errores, lo que ha provocado
 que el id de la tabla `books` se incremente.
 
+## Changelog #4: agregando columnas
+
+Supongamos que durante el desarrollo del proyecto, consideramos necesario agregar los campos `isbn` y `publisher` a
+nuestra tabla `books`.
+
+### Primer paso
+
+Crearemos el archivo de cambio (changeLog) llamado `4_add_isbn_and_publisher_to_books.yml` donde agregaremos las dos
+columnas antes mencionadas:
+
+````yml
+databaseChangeLog:
+  - changeSet:
+      id: add_isbn_and_publisher_to_books
+      author: Martín
+      changes:
+        - addColumn:
+            tableName: books
+            columns:
+              - column:
+                  name: isbn
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: publisher
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
+````
+
+**NOTA**
+
+> Estamos creando las nuevas columnas que aceptan `nulos`, esto es porque en la base de datos tenemos registros y si
+> colocamos de antemano que las nuevas columnas `no acepten nulos` nos va a mostrar un error. Para hacer el ejemplo
+> sencillo colocaremos que las nuevas columnas acepten `nulos`.
+>
+> Ahora, si necesitamos que las nuevas columnas sean `no-null` deberíamos luego hacer la modificación, pero en nuestro
+> caso solo lo dejaremos como `null`.
+
+Si ejecutamos la aplicación veremos que las columnas se han creado correctamente:
+
+![05.add-new-columns-to-books.png](./assets/05.add-new-columns-to-books.png)
+
+### Segundo paso
+
+El segundo paso sería cambiar nuestra entidad `Book` para agregar estos dos nuevos campos:
+
+````java
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Data
+@Entity
+@Table(name = "books")
+public class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String title;
+
+    private String isbn;        //<--- Nueva columna
+    private String publisher;   //<--- Nueva columna
+
+    @ManyToOne
+    @JoinColumn(name = "library_id")
+    private Library library;
+}
+````
+
+Si ejecutamos la aplicación y hacemos una petición vía curl veremos que ya nos está retornando las nuevas columnas,
+aunque como no tenemos registros insertados en ellas, es que vemos que nos retorna `null`:
+
+````bash
+$ curl -v http://localhost:8080/api/v1/books | jq
+
+>
+< HTTP/1.1 200
+[
+  {
+    "id": 1,
+    "title": "Java 21 4ta edición",
+    "isbn": null,
+    "publisher": null,
+    "library": {
+      "id": 1,
+      "name": "Biblioteca Municipal"
+    }
+  },
+  {...},
+  {...},
+  {
+    "id": 4,
+    "title": "Sprig Boot 3 con Java 21",
+    "isbn": null,
+    "publisher": null,
+    "library": {
+      "id": 3,
+      "name": "Biblioteca de la UNS"
+    }
+  }
+]
+````

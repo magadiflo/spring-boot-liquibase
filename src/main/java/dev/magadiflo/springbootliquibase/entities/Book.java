@@ -20,6 +20,9 @@ public class Book {
     @Column(nullable = false)
     private String title;
 
+    private String isbn;
+    private String publisher;
+
     @ManyToOne
     @JoinColumn(name = "library_id")
     private Library library;

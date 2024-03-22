@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: add_isbn_and_publisher_to_books
+      author: Martín
+      changes:
+        - addColumn:
+            tableName: books
+            columns:
+              - column:
+                  name: isbn
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: publisher
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
