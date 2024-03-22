@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: insert_data_libraries
+      author: Martín
+      changes:
+        - insert:
+            tableName: libraries
+            columns:
+              - column:
+                  name: name
+                  value: Biblioteca Municipal
+        - insert:
+            tableName: libraries
+            columns:
+              - column:
+                  name: name
+                  value: Biblioteca Distrital
+        - insert:
+            tableName: libraries
+            columns:
+              - column:
+                  name: name
+                  value: Biblioteca de la UNS

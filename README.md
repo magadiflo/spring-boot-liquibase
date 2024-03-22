@@ -247,6 +247,7 @@ public class Library {
     @Column(nullable = false)
     private String name;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "library")
     private List<Book> books = new ArrayList<>();
 }
@@ -430,4 +431,163 @@ $ curl -v http://localhost:8080/api/v1/libraries | jq
 <
 []
 ````
+
+## Changelog #2 and #3: inicializando datos
+
+Veamos cómo podemos inicializar nuestras tablas.
+
+Primero crearemos el archivo `2_insert_data_libraries.yml`, ya que esta tabla no depende de nadie, es una tabla
+principal:
+
+````yml
+databaseChangeLog:
+  - changeSet:
+      id: insert_data_libraries
+      author: Martín
+      changes:
+        - insert:
+            tableName: libraries
+            columns:
+              - column:
+                  name: name
+                  value: Biblioteca Municipal
+        - insert:
+            tableName: libraries
+            columns:
+              - column:
+                  name: name
+                  value: Biblioteca Distrital
+        - insert:
+            tableName: libraries
+            columns:
+              - column:
+                  name: name
+                  value: Biblioteca de la UNS
+````
+
+A continuación creamos el archivo `3_insert_data_books.yml` que será para definir los registros de la tabla `books`.
+Este archivo lo creamos segundo, ya que la tabla `books` tiene la clave foránea de la tabla `libraries`, es decir,
+los registros de `books` dependen de los registros de la tabla `libraries`:
+
+````yml
+databaseChangeLog:
+  - changeSet:
+      id: insert_data_books
+      author: Martín
+      changes:
+        - insert:
+            tableName: books
+            columns:
+              - column:
+                  name: title
+                  value: Java 21 4ta edición
+              - column:
+                  name: library_id
+                  valueNumeric: 1
+        - insert:
+            tableName: books
+            columns:
+              - column:
+                  name: title
+                  value: Spring In Action 2022
+              - column:
+                  name: library_id
+                  valueNumeric: 1
+        - insert:
+            tableName: books
+            columns:
+              - column:
+                  name: title
+                  value: Angular 17, la revolución
+              - column:
+                  name: library_id
+                  valueNumeric: 2
+        - insert:
+            tableName: books
+            columns:
+              - column:
+                  name: title
+                  value: Sprig Boot 3 con Java 21
+              - column:
+                  name: library_id
+                  valueNumeric: 3
+````
+
+Ahora, ejecutamos la aplicación y revisamos lo que se generó en la base de datos:
+
+![insert data tables](./assets/04.insert-data-tables.png)
+
+Los registros fueron insertados en su correspondiente tabla y además guardan relación. Por otro lado, la
+tabla `DATABASECHANGELOG` volvió a registrar datos, esta vez incluyó las dos migraciones para insertar datos.
+
+Esta vez probamos los endpoints y vemos el siguiente resultado:
+
+````bash
+$ curl -v http://localhost:8080/api/v1/libraries | jq
+
+>
+< HTTP/1.1 200
+<
+[
+  {
+    "id": 3,
+    "name": "Biblioteca de la UNS"
+  },
+  {
+    "id": 2,
+    "name": "Biblioteca Distrital"
+  },
+  {
+    "id": 1,
+    "name": "Biblioteca Municipal"
+  }
+]
+````
+
+````bash
+$ curl -v http://localhost:8080/api/v1/books | jq
+
+>
+< HTTP/1.1 200
+<
+[
+  {
+    "id": 4,
+    "title": "Java 21 4ta edición",
+    "library": {
+      "id": 1,
+      "name": "Biblioteca Municipal"
+    }
+  },
+  {
+    "id": 5,
+    "title": "Spring In Action 2022",
+    "library": {
+      "id": 1,
+      "name": "Biblioteca Municipal"
+    }
+  },
+  {
+    "id": 6,
+    "title": "Angular 17, la revolución",
+    "library": {
+      "id": 2,
+      "name": "Biblioteca Distrital"
+    }
+  },
+  {
+    "id": 7,
+    "title": "Sprig Boot 3 con Java 21",
+    "library": {
+      "id": 3,
+      "name": "Biblioteca de la UNS"
+    }
+  }
+]
+````
+
+**NOTA**
+
+El id de `books` empieza en 4 y es porque había iniciado anteriormente la aplicación con errores, lo que ha provocado
+que el id de la tabla `books` se incremente.
 

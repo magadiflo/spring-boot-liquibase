@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: insert_data_books
+      author: Martín
+      changes:
+        - insert:
+            tableName: books
+            columns:
+              - column:
+                  name: title
+                  value: Java 21 4ta edición
+              - column:
+                  name: library_id
+                  valueNumeric: 1
+        - insert:
+            tableName: books
+            columns:
+              - column:
+                  name: title
+                  value: Spring In Action 2022
+              - column:
+                  name: library_id
+                  valueNumeric: 1
+        - insert:
+            tableName: books
+            columns:
+              - column:
+                  name: title
+                  value: Angular 17, la revolución
+              - column:
+                  name: library_id
+                  valueNumeric: 2
+        - insert:
+            tableName: books
+            columns:
+              - column:
+                  name: title
+                  value: Sprig Boot 3 con Java 21
+              - column:
+                  name: library_id
+                  valueNumeric: 3
