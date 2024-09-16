@@ -61,6 +61,25 @@ confirmación automática fallidas que pueden dejar la base de datos en un estad
 cambios, cada `changeSet` tiene éxito o falla; si falla, puede corregirlo y volver a implementarlo. También
 puede agregar comentarios a conjuntos de cambios individuales para explicar por qué son importantes.
 
+### No modificar los `changeSet` ya aplicados
+
+Si ya has ejecutado un `changeSet` y `Liquibase` lo ha marcado como aplicado en la tabla de control
+`(DATABASECHANGELOG)`, no es recomendable modificarlo directamente. Esto es porque `Liquibase` utiliza un `checkSum`
+para asegurar la integridad de los cambios. Si modificas un `changeSet` ya ejecutado, el `checkSum` no coincidirá y
+`Liquibase` lanzará un error.
+
+### Crear un nuevo `changeSet` o un nuevo archivo `changeLog`
+
+En lugar de modificar el archivo original, lo ideal es:
+
+- Crear un nuevo `changeSet` dentro del mismo archivo `changeLog`.
+- O, si lo prefieres, `crear un nuevo archivo changeLog` con el nuevo cambio, y enlazarlo al archivo principal con una
+  instrucción `include` o `includeAll`.
+
+Ambos enfoques son válidos y dependerán de cómo estés organizando tus migraciones. Personalmente, si los cambios están
+relacionados con el mismo contexto o feature, podrías añadirlos en el mismo archivo. Si no, un archivo separado también
+es buena práctica, sobre todo para mantener un historial claro.
+
 ## [Change Types](https://docs.liquibase.com/change-types/home.html)
 
 Un `Change Type` es un cambio con formato `XML`, `YAML` o `JSON` independiente de la base de datos que puede especificar
